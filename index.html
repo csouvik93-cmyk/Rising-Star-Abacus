@@ -77,9 +77,9 @@
 <section id="admission">
   <h2>Admission Form</h2>
   <div class="contact-box">
-    <form name="admission" method="POST" data-netlify="true" enctype="multipart/form-data" onsubmit="generateRegNo()">
+    <form id="admissionForm" enctype="multipart/form-data" onsubmit="submitToKV(event)">
       <input type="hidden" name="registration_no" id="registration_no" />
-      <input type="hidden" name="form-name" value="admission" />
+      
 
       <label>Student Name</label><br />
       <input type="text" name="student_name" required /><br /><br />
@@ -160,13 +160,40 @@
 
 <script>
   function generateRegNo() {
-    const reg = 'RSA-' + new Date().getFullYear() + '-' + Math.floor(100000 + Math.random() * 900000);
-    document.getElementById('registration_no').value = reg;
-    localStorage.setItem('lastReg', reg);
+    return 'RSA-' + new Date().getFullYear() + '-' + Math.floor(100000 + Math.random() * 900000);
   }
 
-  if (localStorage.getItem('lastReg')) {
-    document.getElementById('showReg').innerText = localStorage.getItem('lastReg');
+  async function submitToKV(e) {
+    e.preventDefault();
+
+    const form = document.getElementById('admissionForm');
+    const formData = new FormData(form);
+
+    const regNo = generateRegNo();
+    formData.append('registration_no', regNo);
+
+    const obj = {};
+    formData.forEach((v, k) => {
+      if (v instanceof File) {
+        obj[k] = v.name;
+      } else {
+        obj[k] = v;
+      }
+    });
+
+    const res = await fetch('https://YOUR-WORKER-NAME.YOUR-ACCOUNT.workers.dev', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(obj)
+    });
+
+    if (res.ok) {
+      document.getElementById('showReg').innerText = regNo;
+      showSection('thankyou');
+      form.reset();
+    } else {
+      alert('Submission failed. Please try again.');
+    }
   }
 </script>
     </form>
@@ -196,3 +223,4 @@
 </script>
 </body>
 </html>
+
